@@ -1,6 +1,4 @@
 package edu.wpi.first.wpilibj.templates;
-
-
 import edu.wpi.first.wpilibj.DigitalInput;
 import edu.wpi.first.wpilibj.Jaguar;
 import edu.wpi.first.wpilibj.Joystick;
@@ -9,41 +7,58 @@ import edu.wpi.first.wpilibj.SimpleRobot;
 import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj.Victor;
 
-
-
 public class Robot extends SimpleRobot {
     
-    Victor Drive1 = new Victor(1);
-    Victor Drive2 = new Victor(2);
-    Victor Shooter1 = new Victor(3);
-    Victor Shooter2 = new Victor(4);
-    Victor Lift = new Victor(5);
-    Victor Belt = new Victor(6);
-    Jaguar Wheel = new Jaguar(7);
+    public static Victor DriveLeft = new Victor(1);
+    public static Victor DriveRight = new Victor(2);
+    public static Victor Shooter1 = new Victor(3);
+    public static Victor Shooter2 = new Victor(4);
+    public static Victor Lift = new Victor(5);
+    public static Victor Belt = new Victor(6);
+    public static Jaguar Wheel = new Jaguar(7);
     
-    Joystick drivestick = new Joystick(1);
-    Joystick shootstick = new Joystick(2);
+    public static Joystick drivestick = new Joystick(1);
+    public static Joystick shootstick = new Joystick(2);
     
-    DigitalInput switchDown = new DigitalInput(12);
-    DigitalInput switchUp = new DigitalInput(14);
+    public static DigitalInput switchDown = new DigitalInput(12);
+    public static DigitalInput switchUp = new DigitalInput(14);
     
-    Relay Pin = new Relay(1);
+    public static Relay Pin = new Relay(1);
     
-    boolean PinToggle = false;
-    boolean beltToggle = false;
-    boolean firstTick = false;
+    public static boolean PinToggle = false;
+    public static boolean beltToggle = false;
+    public static boolean firstTick = false;
     
     public void autonomous() {
-        int driveSpeed = 1; // # of seconds for 1 foot movement
-        String StartPos = "Left";
+        int StartPos = StartPosition.FRONT_LEFT; // position relative to the target
         
-        if (StartPos.equals("Left")) {
-            //dump
-            
-        } else if (StartPos.equals("Right")) {
-            //dump
-        } else if (StartPos.equals("Centre")) {
-            //shoot
+        if (StartPos == StartPosition.FRONT_LEFT) { // drive to dump and dump while lowering lift
+            DriveAutonomous.Stright(2, true, false);
+            DriveAutonomous.Turn(2, true, true);
+            DriveAutonomous.Stright(5, true, true);
+            DriveAutonomous.Turn(1, true, false);
+            Belt.set(0.5);
+            Wheel.set(-1.0); 
+        } else if (StartPos == StartPosition.FRONT_RIGHT) { // drive to dump and dump while lowering lift
+            DriveAutonomous.Stright(1, true, false);
+            DriveAutonomous.Turn(1, true, false);
+            DriveAutonomous.Stright(2, true, false);
+            Belt.set(0.5);
+            Wheel.set(-1.0);
+        } else if (StartPos == StartPosition.REAR_LEFT) { // stop to lower lift then shoot then drive under tower and pick up
+            DriveAutonomous.moveLift(false);
+            DriveAutonomous.Shoot(2.0, 1.5, 3);
+            DriveAutonomous.Stright(1, false, false);
+            DriveAutonomous.Turn(2, false, true);
+            DriveAutonomous.Stright(5, false, false);
+            DriveAutonomous.Turn(2, false, true);
+        } else if (StartPos == StartPosition.REAR_RIGHT) { // stop to lower lift then shoot then drive under tower and pick up
+           DriveAutonomous.moveLift(false);
+           DriveAutonomous.Shoot(2.0, 1.5, 3);
+           DriveAutonomous.Stright(1, false, false);
+           DriveAutonomous.Turn(2, false, false);
+           DriveAutonomous.Stright(5, false, false);
+           DriveAutonomous.Turn(2, false, true);
         }
     }
 
@@ -61,8 +76,8 @@ public class Robot extends SimpleRobot {
             
             double X = drivestick.getX();
             double Y = drivestick.getY();
-            Drive1.set((Y - X) * -0.99); 
-            Drive2.set((Y + X) * 0.99);
+            DriveLeft.set((Y - X) * -0.99); 
+            DriveRight.set((Y + X) * 0.99);
             
             if (shootstick.getRawButton(3)) {
                 Shooter1.set(-1.0);
@@ -74,8 +89,8 @@ public class Robot extends SimpleRobot {
             
             if (!beltToggle) {
                 if (shootstick.getRawButton(6)) {
+                    beltToggle = true;
                     if (toggleBelt == ToggleStateBelt.UP) {
-                        beltToggle = true;
                         toggleBelt = ToggleStateBelt.DOWN;
                         Belt.set(0.5);
                         Wheel.set(-1.0); 
@@ -131,7 +146,7 @@ public class Robot extends SimpleRobot {
                }
            }
                       
-            Timer.delay(0.01); // 0.03
+            Timer.delay(0.01); // more for total when pin is being used
         }
     }
     
