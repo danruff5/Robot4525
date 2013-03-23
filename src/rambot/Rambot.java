@@ -21,7 +21,7 @@ public class Rambot extends SimpleRobot {
     // ------- DRIVER CONTROL ---
     private Joystick driverStick;
     private Joystick shootStick;
-    private DriverStation ds;
+    private DriverStation driverStn;
     
     // ---- SENSORS -------
     private DigitalInput switchDown;
@@ -30,6 +30,7 @@ public class Rambot extends SimpleRobot {
     // ------- CONTROL ----------
     int pinC; // for the pin movement but allowing program to not stop (pin down time)
     boolean pinStp;
+    private double pinDelay; // delay for the actuator to respond
     
     public void robotInit() {
         this.driveLeft = new Victor(1);
@@ -48,44 +49,59 @@ public class Rambot extends SimpleRobot {
         this.driverStick = new Joystick(1);
         this.shootStick = new Joystick(2);
 
-        this.ds = DriverStation.getInstance();
+        this.driverStn = DriverStation.getInstance();
         
         this.pinC = 0;
         this.pinStp = false;
+        this.pinDelay = 0.01;
     }
     
     public void autonomous() { // called once in autonomous period
-        /*if (ds.getDigitalIn(1) == false){
-            //x code here
-            System.out.println("test for 1");
-        }
-        if (ds.getDigitalIn(2) == false){
-            System.out.println("test for 2");
-        }else{
+        if (this.driverStn.getDigitalIn(1)){ // switch #1
             
-        }*/
-        while (this.switchDown.get()) {
-            // lower lift all the way
-            this.lift.set(1.0);
+            // --------- LOWER LIFT ---------
+            System.out.println("--- Rambot is Lowering Lift ---");
+            while (this.switchDown.get()) {
+                this.lift.set(-1.0);
+                if (!this.driverStn.isAutonomous()) {
+                    break;
+                }
+                
+            }
+            this.lift.set(0.0);
+            
+        } else if (this.driverStn.getDigitalIn(2)) { // switch #2
+            
+            // --------- SHOOT WITH LIFT UP ------
+            System.out.println("--- Rambot is Shooting ---");
+            // warm up shooter wheels
+            this.shooter1.set(-1.0);
+            this.shooter2.set(-1.0);
+            Timer.delay(1.5);
+            for (int i = 0; i < 2; i ++) {
+                // shoot using pin to allow disc to go into wheel
+                this.pin.set(Relay.Value.kReverse);
+                this.pin.set(Relay.Value.kOff);
+                Timer.delay(0.5);
+                this.pin.set(Relay.Value.kForward);
+                this.pin.set(Relay.Value.kOff);
+                Timer.delay(2.0);
+            }
+            
+        } else {
+            Timer.delay(14.5);
         }
-        // warm up shooter wheels
-        this.shooter1.set(-1.0);
-        this.shooter2.set(-1.0);
-        Timer.delay(1.5);
-        for (int i = 0; i < 3; i ++) {
-            // shoot using pin to allow disc to go into wheel
-            this.pin.set(Relay.Value.kReverse);
-            this.pin.set(Relay.Value.kOff);
-            Timer.delay(0.5);
-            this.pin.set(Relay.Value.kForward);
-            this.pin.set(Relay.Value.kOff);
-            Timer.delay(2.0);
-        }
+        
+        
+       
         
     }
     
     public void operatorControl() { // called once in teloperated period
         
+        this.pin.set(Relay.Value.kForward);
+        Timer.delay(this.pinDelay);        
+        this.pin.set(Relay.Value.kOff);
         
         while(isOperatorControl() && isEnabled()) {
             // ---- DRIVE -----------
@@ -121,6 +137,7 @@ public class Rambot extends SimpleRobot {
             if(this.shootStick.getTrigger()) {
                 // pin down
                 this.pin.set(Relay.Value.kReverse);
+                Timer.delay(this.pinDelay);
                 this.pin.set(Relay.Value.kOff);
                 this.pinStp = true;
             }
@@ -133,18 +150,31 @@ public class Rambot extends SimpleRobot {
                 this.pinStp = false;
                 this.pinC = 0;
                 this.pin.set(Relay.Value.kForward);
+                Timer.delay(this.pinDelay);
                 this.pin.set(Relay.Value.kOff);
             }
             
-            // --------- SHOOTER --------
-            if(this.shootStick.getRawButton(2)) {
+            // --------- WALL LOADING --------
+            if (this.shootStick.getRawButton(2)) {
+                // make pin retract
                 this.pin.set(Relay.Value.kReverse);
-                Timer.delay(0.05);
+                Timer.delay(this.pinDelay);
+                this.pin.set(Relay.Value.kOff);
+                while (this.shootStick.getRawButton(2)) { // no drive control
+                    // reverse shoot wheels
+                    this.shooter1.set(0.5);
+                    this.shooter2.set(0.5);
+                    // reverse belt
+                    this.belt.set(-1.0);
+                }
+                // make pin extend
+                this.pin.set(Relay.Value.kForward);
+                Timer.delay(this.pinDelay);
                 this.pin.set(Relay.Value.kOff);
             }
             
             // ------- LIFT -------
-            if(this.shootStick.getRawButton(11)) { // && this.switchUp.get()) {
+            if(this.shootStick.getRawButton(11) && this.switchUp.get()) {
                 // lift move up
                 this.lift.set(1.0);
             } else if(this.shootStick.getRawButton(10) && this.switchDown.get()) {
