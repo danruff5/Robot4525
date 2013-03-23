@@ -77,6 +77,8 @@ public class Rambot extends SimpleRobot {
             // warm up shooter wheels
             this.shooter1.set(-1.0);
             this.shooter2.set(-1.0);
+            // start belt
+            this.belt.set(1.0);
             Timer.delay(1.5);
             for (int i = 0; i < 2; i ++) {
                 // shoot using pin to allow disc to go into wheel
