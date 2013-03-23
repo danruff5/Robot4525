@@ -1,6 +1,6 @@
-MIDlet-Name: 13Robot4525
+MIDlet-Name: Rambot4525
 MIDlet-Version: 1.0.0
 MIDlet-Vendor: FIRST
-MIDlet-1: Robot, , edu.wpi.first.wpilibj.templates.Robot
+MIDlet-1: Rambot, , rambot.Rambot
 MicroEdition-Profile: IMP-1.0
 MicroEdition-Configuration: CLDC-1.1
